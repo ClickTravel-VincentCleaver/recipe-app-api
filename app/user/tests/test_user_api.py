@@ -8,6 +8,7 @@ from rest_framework import status
 
 CREATE_USER_URL = reverse('user:create')
 TOKEN_URL = reverse('user:token')
+ME_URL = reverse('user:me')
 
 
 def create_user(**params):
@@ -17,7 +18,9 @@ def create_user(**params):
 class PublicUserApiTests(TestCase):
     """Test the users API (public)"""
 
+    # ------------------------------------------------------
     # CREATE USER tests
+    # ------------------------------------------------------
 
     def setUp(self):
         self.client = APIClient()
@@ -85,7 +88,9 @@ class PublicUserApiTests(TestCase):
         ).exists()
         self.assertFalse(user_exists)
 
+    # ------------------------------------------------------
     # TOKEN tests
+    # ------------------------------------------------------
 
     def test_create_token_for_user(self):
         """Test that a token is created for the user"""
@@ -152,3 +157,74 @@ class PublicUserApiTests(TestCase):
 
         # Then the response does not contain a token
         self.assertNotIn('token', response.data)
+
+    # ------------------------------------------------------
+    # ME tests
+    # ------------------------------------------------------
+
+    def test_get_me_unauthorised(self):
+        """Test that authentication is required for users"""
+
+        # Given no authentication token
+
+        # When
+        response = self.client.get(ME_URL)
+
+        # Then
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateUserApiTests(TestCase):
+    """Test API requests that require authentication"""
+
+    def setUp(self):
+        self.user = create_user(
+            email='random@random.com',
+            password='MOCK_PASSWORD',
+            name='MOCK_NAME'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_get_me_success(self):
+        """Test get me for authenticated user"""
+        response = self.client.get(ME_URL)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                'name': self.user.name,
+                'email': self.user.email
+            },
+        )
+
+    def test_post_me_not_allowed(self):
+        """Test that POST is not allowed on me URL"""
+
+        # Given / When
+        response = self.client.post(ME_URL, {})
+
+        # Then
+        self.assertEqual(
+            response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_update_me_success(self):
+        """Test updating the user profile for authenticated user"""
+
+        # Given
+        payload = {
+            'name': 'MOCK_NEW_NAME',
+            'password': 'MOCK_NEW_PASSWORD',
+        }
+
+        # When
+        response = self.client.patch(ME_URL, payload)
+
+        # Then request is successful
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Then user is updated
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, payload['name'])
+        self.assertTrue(self.user.check_password(payload['password']))
