@@ -21,10 +21,8 @@ class PublicIngredientsApiTests(TestCase):
 
     def test_login_required(self):
         """Test that authentication is required to retrieve ingredients"""
-
-        # TEST DISABLED
-        # response = self.client.get(INGREDIENTS_URL)
-        # self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        response = self.client.get(INGREDIENTS_URL)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class PrivateIngredientsApiTests(TestCase):
