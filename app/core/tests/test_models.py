@@ -10,6 +10,10 @@ def sample_user(email='random@random.com', password='Password1'):
 
 class ModelTests(TestCase):
 
+    # -------------------------------
+    # model: USER
+    # -------------------------------
+
     def test_create_user_with_email_successful(self):
         """Test creation of new user with email is successful"""
 
@@ -65,6 +69,10 @@ class ModelTests(TestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
 
+    # -------------------------------
+    # model: TAG
+    # -------------------------------
+
     def test_tag_str(self):
         """Test the tag string representation"""
         tag = models.Tag.objects.create(
@@ -73,3 +81,16 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(tag), tag.name)
+
+    # -------------------------------
+    # model: INGREDIENT
+    # -------------------------------
+
+    def test_ingredient_str(self):
+        """Test the ingredient string representation"""
+        ingredient = models.Ingredient.objects.create(
+            user=sample_user(),
+            name='Sugar'
+        )
+
+        self.assertEquals(str(ingredient), ingredient.name)
